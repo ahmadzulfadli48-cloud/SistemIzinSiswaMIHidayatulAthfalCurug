@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Izin Siswa Online</title>
+    <!-- Bootstrap CSS untuk tampilan yang lebih baik -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .container-main {
+            max-width: 900px;
+            margin-top: 30px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+            color: white;
+        }
+        .table-responsive {
+            border-radius: 0 0 10px 10px;
+        }
+        .attachment-link {
+            cursor: pointer;
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .attachment-link:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Notifikasi Sukses/Error -->
+    <div id="notification" class="alert alert-success" role="alert">
+        <span id="notification-message"></span>
+    </div>
+
+    <div class="container container-main">
+        <div class="text-center mb-4">
+            <h1 class="fw-bold">Sistem Izin Siswa</h1>
+            <p class="text-muted">MIS HIDAYATUL ATHFAL CURUG</p>
+        </div>
+
+        <div class="card">
+            <!-- Navigasi Tab -->
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="form-tab" data-bs-toggle="tab" data-bs-target="#form-pane" type="button" role="tab">Form Pengajuan Izin</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data-pane" type="button" role="tab">Data Pengajuan</button>
+                </li>
+            </ul>
+
+            <!-- Konten Tab -->
+            <div class="tab-content" id="myTabContent">
+                
+                <!-- Tab Form Pengajuan -->
+                <div class="tab-pane fade show active" id="form-pane" role="tabpanel">
+                    <h3 class="mt-4 mb-3">Ajukan Izin</h3>
+                    <form id="form-permission">
+                        <!-- Kolom NIS/NISN dihapus -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="nama" class="form-label">Nama Lengkap</label>
+                                <input type="text" class="form-control" id="nama" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="kelas" class="form-label">Kelas</label>
+                                <input type="text" class="form-control" id="kelas" placeholder="Contoh: XI RPL 2" required>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="tanggal-izin" class="form-label">Tanggal Izin</label>
+                                <input type="date" class="form-control" id="tanggal-izin" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="alasan" class="form-label">Alasan Izin</label>
+                            <textarea class="form-control" id="alasan" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="surat" class="form-label">Lampiran Surat (Wajib)</label>
+                            <input class="form-control" type="file" id="surat" accept="image/*,.pdf" required>
+                            <div class="form-text">Format yang didukung: JPG, PNG, PDF. Maksimal 5MB.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Kirim Pengajuan</button>
+                    </form>
+                </div>
+
+                <!-- Tab Data Tabel -->
+                <div class="tab-pane fade" id="data-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mt-4 mb-3">
+                        <h3 class="mb-0">Data Pengajuan Masuk</h3>
+                        <button id="export-btn" class="btn btn-success">
+                            <i class="bi bi-file-earmark-excel"></i> Export ke Excel
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>No</th>
+                                    <th>Nama</th>
+                                    <!-- Kolom NIS/NISN dihapus -->
+                                    <th>Kelas</th>
+                                    <th>Tanggal Izin</th>
+                                    <th>Alasan</th>
+                                    <th>Surat</th>
+                                    <!-- Kolom Status dihapus -->
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="data-table-body">
+                                <!-- Data akan dimuat di sini dengan JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Library SheetJS untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('form-permission');
+            const tableBody = document.getElementById('data-table-body');
+            const exportBtn = document.getElementById('export-btn');
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+
+            // Fungsi untuk menampilkan notifikasi
+            function showNotification(message, type = 'success') {
+                notificationMessage.textContent = message;
+                notification.className = `alert alert-${type}`;
+                notification.style.display = 'block';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 3000);
+            }
+
+            // Fungsi untuk membaca data dari localStorage
+            function getData() {
+                const data = localStorage.getItem('izinSiswa');
+                return data ? JSON.parse(data) : [];
+            }
+
+            // Fungsi untuk menyimpan data ke localStorage
+            function saveData(data) {
+                localStorage.setItem('izinSiswa', JSON.stringify(data));
+            }
+
+            // Fungsi untuk menampilkan data ke tabel
+            function displayData() {
+                const data = getData();
+                tableBody.innerHTML = ''; // Kosongkan tabel
+
+                if (data.length === 0) {
+                    // colspan disesuaikan menjadi 7 (No, Nama, Kelas, Tanggal, Alasan, Surat, Aksi)
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Belum ada data pengajuan.</td></tr>';
+                    return;
+                }
+
+                data.forEach((item, index) => {
+                    const row = document.createElement('tr');
+                    // InnerHTML disesuaikan, kolom NIS dan Status dihapus
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${item.nama}</td>
+                        <td>${item.kelas}</td>
+                        <td>${item.tanggal}</td>
+                        <td>${item.alasan}</td>
+                        <td><a href="${item.suratData}" target="_blank" class="attachment-link">Lihat Surat</a></td>
+                        <td><button class="btn btn-sm btn-danger delete-btn" data-id="${item.id}">Hapus</button></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            }
+
+            // Event Listener untuk submit form
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const fileInput = document.getElementById('surat');
+                const file = fileInput.files[0];
+
+                if (!file) {
+                    showNotification('Harap lampirkan surat izin!', 'danger');
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    showNotification('Ukuran file terlalu besar! Maksimal 5MB.', 'danger');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const newData = {
+                        id: Date.now(), // ID unik berdasarkan waktu
+                        nama: document.getElementById('nama').value,
+                        // Properti 'nis' dihapus
+                        kelas: document.getElementById('kelas').value,
+                        tanggal: document.getElementById('tanggal-izin').value,
+                        alasan: document.getElementById('alasan').value,
+                        suratData: event.target.result // Simpan file sebagai Base64
+                    };
+
+                    const allData = getData();
+                    allData.push(newData);
+                    saveData(allData);
+
+                    showNotification('Pengajuan izin berhasil dikirim!');
+                    form.reset();
+                    
+                    // Beralih ke tab data dan refresh tabel
+                    const dataTab = new bootstrap.Tab(document.getElementById('data-tab'));
+                    dataTab.show();
+                    displayData();
+                };
+                reader.readAsDataURL(file); // Baca file sebagai URL Data (Base64)
+            });
+
+            // Event Listener untuk tombol hapus (menggunakan event delegation)
+            tableBody.addEventListener('click', function(e) {
+                if (e.target.classList.contains('delete-btn')) {
+                    const idToDelete = parseInt(e.target.getAttribute('data-id'));
+                    if (confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                        let allData = getData();
+                        allData = allData.filter(item => item.id !== idToDelete);
+                        saveData(allData);
+                        displayData();
+                        showNotification('Data berhasil dihapus.');
+                    }
+                }
+            });
+
+            // Event Listener untuk tombol export Excel
+            exportBtn.addEventListener('click', function() {
+                const data = getData();
+                if (data.length === 0) {
+                    showNotification('Tidak ada data untuk diekspor.', 'warning');
+                    return;
+                }
+
+                // Siapkan data untuk SheetJS, header dan data disesuaikan
+                const ws_data = [
+                    ['No', 'Nama', 'Kelas', 'Tanggal Izin', 'Alasan'] // Header, NIS dan Status dihapus
+                ];
+
+                data.forEach((item, index) => {
+                    ws_data.push([
+                        index + 1,
+                        item.nama,
+                        // item.nis, // Dihapus
+                        item.kelas,
+                        item.tanggal,
+                        item.alasan
+                        // 'Menunggu Verifikasi' // Dihapus
+                    ]);
+                });
+
+                // Buat worksheet dan workbook
+                const ws = XLSX.utils.aoa_to_sheet(ws_data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Izin Siswa");
+
+                // Download file Excel
+                XLSX.writeFile(wb, `Data_Izin_Siswa_${new Date().toISOString().split('T')[0]}.xlsx`);
+                showNotification('Data berhasil diekspor ke Excel!');
+            });
+
+            // Tampilkan data saat tab data diklik
+            document.getElementById('data-tab').addEventListener('shown.bs.tab', displayData);
+
+            // Tampilkan data awal saat halaman dimuat (jika tab data aktif)
+            if (document.getElementById('data-pane').classList.contains('active')) {
+                displayData();
+            }
+        });
+    </script>
+</body>
+</html>
